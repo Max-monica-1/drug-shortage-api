@@ -1,4 +1,6 @@
 """Drug Shortage API built with FastAPI."""
+from typing import Literal
+
 from fastapi import Depends, FastAPI, Query
 from snowflake.connector import DictCursor
 
@@ -49,4 +51,36 @@ def list_shortages(
     rows = cur.fetchall()
 
     # Return lowercase keys, which is the usual JSON style
+    return [{key.lower(): value for key, value in row.items()} for row in rows]
+
+
+# Columns that can be used for grouping (whitelist to keep the SQL safe)
+STATS_COLUMNS = {
+    "status": "STATUS",
+    "reason": "REASON",
+    "company": "COMPANY_NAME",
+}
+
+
+@app.get("/shortages/stats")
+def shortage_stats(
+    by: Literal["status", "reason", "company"] = Query(
+        "status", description="Group shortage reports by this field"
+    ),
+    conn=Depends(get_connection),
+):
+    """Count shortage reports grouped by status, reason or company."""
+    column = STATS_COLUMNS[by]
+    sql = f"""
+        SELECT {column} AS CATEGORY,
+               COUNT(*) AS N,
+               ROUND(COUNT(*) * 100 / SUM(COUNT(*)) OVER (), 1) AS PCT
+        FROM SHORTAGE
+        GROUP BY {column}
+        ORDER BY N DESC
+        LIMIT 20
+    """
+    cur = conn.cursor(DictCursor)
+    cur.execute(sql)
+    rows = cur.fetchall()
     return [{key.lower(): value for key, value in row.items()} for row in rows]
