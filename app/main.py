@@ -1,14 +1,16 @@
 """Drug Shortage API built with FastAPI."""
 from typing import Literal
 
-from fastapi import Depends, FastAPI, Query
+from botocore.exceptions import ClientError
+from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from snowflake.connector import DictCursor
 
+from app import s3
 from app.db import get_connection
 
 app = FastAPI(
     title="Drug Shortage API",
-    description="Serves Canadian drug shortage data from Snowflake.",
+    description="Serves Canadian drug shortage data from Snowflake and AWS S3.",
     version="0.1.0",
 )
 
@@ -84,3 +86,25 @@ def shortage_stats(
     cur.execute(sql)
     rows = cur.fetchall()
     return [{key.lower(): value for key, value in row.items()} for row in rows]
+
+@app.get("/files")
+def list_raw_files():
+    """List raw data files stored in S3."""
+    return s3.list_files()
+
+
+@app.get("/files/{name}")
+def preview_raw_file(
+    name: str = Path(
+        ..., pattern=r"^[\w.-]+\.csv$", description="CSV file name, e.g. shortage_clean.csv"
+    ),
+    rows: int = Query(5, ge=1, le=50, description="Number of rows to preview"),
+):
+    """Preview the first rows of a raw CSV file in S3."""
+    try:
+        return s3.preview_file(name, rows)
+    except ClientError as error:
+        code = error.response["Error"]["Code"]
+        if code in ("NoSuchKey", "404", "AccessDenied", "403"):
+            raise HTTPException(status_code=404, detail=f"File '{name}' not found")
+        raise
