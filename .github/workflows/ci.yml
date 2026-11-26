@@ -1,0 +1,17 @@
+# CI: run the reusable checks on every pull request and on every push to main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python-checks:
+    strategy:
+      matrix:
+        # 3.10 matches the local development machine, 3.12 is the current target
+        python-version: ["3.10", "3.12"]
+    uses: ./.github/workflows/reusable-python-checks.yml
+    with:
+      python-version: ${{ matrix.python-version }}

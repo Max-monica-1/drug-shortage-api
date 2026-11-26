@@ -9,13 +9,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 s3 = boto3.client("s3")
-BUCKET = os.environ["S3_BUCKET"]
 PREFIX = "raw/"
+
+
+def _bucket() -> str:
+    """Read the bucket name when it is needed, so the app can start without it (e.g. in tests)."""
+    return os.environ["S3_BUCKET"]
 
 
 def list_files():
     """List CSV files in the raw/ folder of the bucket."""
-    response = s3.list_objects_v2(Bucket=BUCKET, Prefix=PREFIX)
+    response = s3.list_objects_v2(Bucket=_bucket(), Prefix=PREFIX)
     return [
         {
             "name": obj["Key"].removeprefix(PREFIX),
@@ -29,7 +33,7 @@ def list_files():
 
 def preview_file(name: str, rows: int):
     """Read the first rows of a CSV file in raw/ and return them as records."""
-    obj = s3.get_object(Bucket=BUCKET, Key=PREFIX + name)
+    obj = s3.get_object(Bucket=_bucket(), Key=PREFIX + name)
     df = pd.read_csv(obj["Body"], nrows=rows, dtype=str)
     # Replace NaN with None so the result can be returned as JSON
     df = df.astype(object).where(df.notna(), None)

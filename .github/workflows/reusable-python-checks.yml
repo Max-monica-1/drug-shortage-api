@@ -1,0 +1,43 @@
+# Reusable workflow: lint and test a Python project.
+# Other workflows call it with "uses:", so the same checks are defined in one place.
+name: Reusable Python checks
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "Python version to run the checks with"
+        type: string
+        default: "3.12"
+      requirements-file:
+        description: "File with the packages to install"
+        type: string
+        default: "requirements-dev.txt"
+      lint-paths:
+        description: "Folders to check with ruff"
+        type: string
+        default: "app tests scripts"
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ${{ inputs.requirements-file }}
+
+      - name: Lint with ruff
+        run: ruff check ${{ inputs.lint-paths }}
+
+      - name: Run tests with pytest
+        run: pytest -v
