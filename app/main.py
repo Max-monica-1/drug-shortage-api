@@ -33,7 +33,7 @@ def list_shortages(
     sql = """
         SELECT REPORT_ID, DIN, BRAND_NAME, COMPANY_NAME, INGREDIENTS,
                STATUS, ACTUAL_START_DATE, ACTUAL_END_DATE, REASON
-        FROM SHORTAGE
+        FROM SHORTAGE_FULL
         WHERE 1 = 1
     """
     params = {}
@@ -78,7 +78,7 @@ def shortage_stats(
         SELECT {column} AS CATEGORY,
                COUNT(*) AS N,
                ROUND(COUNT(*) * 100 / SUM(COUNT(*)) OVER (), 1) AS PCT
-        FROM SHORTAGE
+        FROM SHORTAGE_FULL
         GROUP BY {column}
         ORDER BY N DESC
         LIMIT 20
