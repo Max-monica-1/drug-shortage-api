@@ -2,3 +2,9 @@ snowflake-connector-python
 pandas
 python-dotenv
 fastapi[standard]
+boto3
+scikit-learn
+joblib
+duckdb
+matplotlib
+lifelines

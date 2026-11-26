@@ -226,3 +226,5 @@ __marimo__/
 keys/
 *.p8
 *.pem
+# Local data files
+data/
