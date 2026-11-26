@@ -1,4 +1,5 @@
 """Drug Shortage API built with FastAPI."""
+from app.predict_api import router as predict_router
 from typing import Literal
 
 from botocore.exceptions import ClientError
@@ -13,7 +14,7 @@ app = FastAPI(
     description="Serves Canadian drug shortage data from Snowflake and AWS S3.",
     version="0.1.0",
 )
-
+app.include_router(predict_router)
 
 @app.get("/")
 def root():
