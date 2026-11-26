@@ -1,5 +1,4 @@
 """Drug Shortage API built with FastAPI."""
-from app.predict_api import router as predict_router
 from typing import Literal
 
 from botocore.exceptions import ClientError
@@ -8,6 +7,7 @@ from snowflake.connector import DictCursor
 
 from app import s3
 from app.db import get_connection
+from app.predict_api import router as predict_router
 
 app = FastAPI(
     title="Drug Shortage API",
